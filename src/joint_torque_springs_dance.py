@@ -32,6 +32,7 @@ Baxter RSDK Joint Torque Example: joint springs
 
 import argparse
 import sys
+import numpy as np
 
 import rospy
 
@@ -48,9 +49,12 @@ from baxter_examples.cfg import (
     JointSpringsExampleConfig,
 )
 from baxter_interface import CHECK_VERSION
+from baxter_pykdl import baxter_kinematics
+
 
 b = True
-
+kin = None
+limb_side = None
 
 def try_float(x):
     try:
@@ -206,12 +210,15 @@ class JointSprings(object):
                                                     '_damping_coefficient']
 
     def _update_forces(self):
+        #mode = "control"
+        mode = "reaction"
         """
         Calculates the current angular difference between the start position
         and the current joint positions applying the joint torque spring forces
         as defined on the dynamic reconfigure server.
         """
         global b
+        global kin
         # get latest spring constants
         self._update_parameters()
 
@@ -224,9 +231,12 @@ class JointSprings(object):
         cur_pos = self._limb.joint_angles()
         #print cur_pos
         cur_vel = self._limb.joint_velocities()
-        
+
+        jaco = kin.jacobian(cur_pos)
+
+        #test case
         j = "left_e1"
-        print self._start_angles[j]
+        #print self._start_angles[j]
         upper_limit = 1
         lower_limit = 0.5
         if(self._start_angles[j] <= upper_limit  and self._start_angles[j] >= lower_limit ):
@@ -236,23 +246,54 @@ class JointSprings(object):
             b = not b
             if self._start_angles[j] > upper_limit : self._start_angles[j] = upper_limit 
             elif self._start_angles[j] < lower_limit : self._start_angles[j] = lower_limit 
-         
+        #end of test case 
 
+        torques = [0 for x in range(7)]
+        joint_index = {'s0':0, 's1':1, 'e0':2, 'e1':3, 'w0':4, 'w1':5, 'w2':6 }
+        #joint_index_right = {'right_s0':0, 'right_s1':1, 'right_e0':2, 'right_e1':3, 'right_w0':4, 'right_w1':5, 'right_w2':6 }
+        
+        dummy_force = np.array([0,0,0.05,0,0,0])
+        dummy_torques = np.dot(np.array(jaco).transpose(),dummy_force.transpose())
+            
+        dummy_cmd = {}
         # calculate current forces
         for joint in self._start_angles.keys():
             # spring portion
             #ATTENTION
             stiffness = self._springs[joint]
-            print str(joint) + ' ' + str(stiffness)
+            #print str(joint) + ' ' + str(stiffness)
+            
+            #messy stiffness adjustment
             if (joint == 'left_e1'): stiffness = 1*self._springs[joint]
             elif (joint == 'left_s1'): stiffness = 4*self._springs[joint]
 
-            cmd[joint] = stiffness * (self._start_angles[joint] -
+            if(True):#mode == "control"):
+                cmd[joint] = stiffness * (self._start_angles[joint] -
                                                    cur_pos[joint])
-            # damping portion
-            cmd[joint] -= self._damping[joint] * cur_vel[joint]
+                # damping portion
+                cmd[joint] -= self._damping[joint] * cur_vel[joint]
+                torques[joint_index[joint[len(joint)-2:len(joint)]]] = cmd[joint]        
+            
+            if(mode == "reaction"):
+                dummy_cmd[joint] = dummy_torques[joint_index[joint[len(joint)-2:len(joint)]]]
+
+        # print 'cmd'
+        # print cmd
+        print 'dummy_cmd'
+        print dummy_cmd
+        # print 'dummy_torques'
+        # print dummy_torques
+        # print ""
         # command new joint torques
-        self._limb.set_joint_torques(cmd)
+        #print cmd
+        #print torques
+        force = np.dot(jaco,torques)
+        #print force
+        if(mode == "control"):
+            self._limb.set_joint_torques(cmd)
+
+        if(mode == "reaction"):
+            self._limb.set_joint_torques(dummy_cmd)
 
     def move_to_neutral(self):
         """
@@ -313,6 +354,9 @@ def main():
     You can adjust the spring constant and damping coefficient
     for each joint using dynamic_reconfigure.
     """
+    global kin
+    global limb_side
+
     arg_fmt = argparse.RawDescriptionHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=arg_fmt,
                                      description=main.__doc__)
@@ -321,13 +365,17 @@ def main():
         help='limb on which to attach joint springs'
     )
     args = parser.parse_args(rospy.myargv()[1:])
-
+    limb_side = args.limb
     print("Initializing node... ")
-    rospy.init_node("rsdk_joint_torque_springs_%s" % (args.limb,))
+    rospy.init_node("rsdk_joint_torque_springs_%s" % (limb_side,))
     dynamic_cfg_srv = Server(JointSpringsExampleConfig,
                              lambda config, level: config)
-    #js = JointSprings(args.limb, dynamic_cfg_srv)
-    map_file("dance_trial")
+    
+    #Initialize object from pyKDL library
+    kin = baxter_kinematics(args.limb)
+
+    js = JointSprings(args.limb, dynamic_cfg_srv)
+    #map_file("dance_trial")
     # register shutdown callback
     rospy.on_shutdown(js.clean_shutdown)
     js.move_to_neutral()
