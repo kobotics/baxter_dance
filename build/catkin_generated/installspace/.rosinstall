@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/kim/baxter/ros_ws/src/baxter_dance/install/setup.sh
