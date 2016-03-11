@@ -235,7 +235,7 @@ class JointSprings(object):
         jaco = kin.jacobian(cur_pos)
 
         #test case
-        j = "left_e1"
+        j = "right_e1"
         #print self._start_angles[j]
         upper_limit = 1
         lower_limit = 0.5
@@ -252,7 +252,7 @@ class JointSprings(object):
         joint_index = {'s0':0, 's1':1, 'e0':2, 'e1':3, 'w0':4, 'w1':5, 'w2':6 }
         #joint_index_right = {'right_s0':0, 'right_s1':1, 'right_e0':2, 'right_e1':3, 'right_w0':4, 'right_w1':5, 'right_w2':6 }
         
-        dummy_force = np.array([0,0,0.05,0,0,0])
+        dummy_force = np.array([0,2.5,0,0,0,0])
         dummy_torques = np.dot(np.array(jaco).transpose(),dummy_force.transpose())
             
         dummy_cmd = {}
@@ -264,8 +264,8 @@ class JointSprings(object):
             #print str(joint) + ' ' + str(stiffness)
             
             #messy stiffness adjustment
-            if (joint == 'left_e1'): stiffness = 1*self._springs[joint]
-            elif (joint == 'left_s1'): stiffness = 4*self._springs[joint]
+            #if (joint == 'left_e1'): stiffness = 1*self._springs[joint]
+            #elif (joint == 'left_s1'): stiffness = 4*self._springs[joint]
 
             if(True):#mode == "control"):
                 cmd[joint] = stiffness * (self._start_angles[joint] -
@@ -310,7 +310,7 @@ class JointSprings(object):
         self._start_angles = self._limb.joint_angles()
         
         #ATTENTION
-        self._start_angles['left_e1'] = 0.2
+        #self._start_angles['left_e1'] = 0.2
         
 
         # set control rate
