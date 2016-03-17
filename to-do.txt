@@ -1,9 +1,13 @@
 -Translate wrench at arbitrary joint into torque commands
-   -Get r vector from forward kinematics and get equivalent wrench (base frame)
--Right and left arm
+-Get r vector from forward kinematics and get equivalent wrench (base frame)
+-Right and left arm for pykdl
 -Test switching from torque control to position control
 -Safety mechanism node
 -Record trajectory and replay it with torque control
 -Stiffness/Damping parameter tuning
 -Control vs reaction switching (show separately for midterm)
-
+-Dummmy force dependent on velocity
+-Get planar segmentation
+-Get correct transforms between Kinect and robot coord frames
+-Record trajectories kinesthetically
+-Checking for collisions for given trajectory/point cloud
