@@ -1,7 +1,0 @@
-/home/kim/baxter/ros_ws/src/baxter_dance/build/CMakeFiles/clean_test_results.dir
-/home/kim/baxter/ros_ws/src/baxter_dance/build/CMakeFiles/download_extra_data.dir
-/home/kim/baxter/ros_ws/src/baxter_dance/build/CMakeFiles/doxygen.dir
-/home/kim/baxter/ros_ws/src/baxter_dance/build/gtest/CMakeFiles/gtest.dir
-/home/kim/baxter/ros_ws/src/baxter_dance/build/gtest/CMakeFiles/gtest_main.dir
-/home/kim/baxter/ros_ws/src/baxter_dance/build/CMakeFiles/run_tests.dir
-/home/kim/baxter/ros_ws/src/baxter_dance/build/CMakeFiles/tests.dir

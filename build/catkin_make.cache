@@ -1,2 +1,0 @@
-
--DCATKIN_DEVEL_PREFIX=/home/kim/baxter/ros_ws/src/baxter_dance/devel -DCMAKE_INSTALL_PREFIX=/home/kim/baxter/ros_ws/src/baxter_dance/install -G Unix Makefiles
