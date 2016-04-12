@@ -1,0 +1,32 @@
+<launch>
+  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+    <remap from="~input" to="/camera/depth/points" />
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: 0.01
+      filter_limit_max: 1.5
+      filter_limit_negative: False
+      leaf_size: 0.01
+    </rosparam>
+  </node>
+
+  <!-- Estimate point normals -->
+  <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation pcl_manager" output="screen">
+    <remap from="~input" to="/voxel_grid/output" />
+    <rosparam>
+      # -[ Mandatory parameters
+      k_search: 0
+      radius_search: 0.015
+      # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
+      spatial_locator: 0
+    </rosparam>
+  </node>
+
+  <!-- Transform -->
+  <node pkg="my_pcl_tutorial_v2" type="transform_ros" name="transform_ros" output="screen">
+    <remap from="input" to="/voxel_grid/output" />
+  </node>
+</launch>
