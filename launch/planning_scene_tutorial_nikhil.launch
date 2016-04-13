@@ -22,7 +22,7 @@
   <param if="$(arg load_robot_description)" name="robot_description"
       command="$(find xacro)/xacro.py --inorder $(find baxter_description)/urdf/baxter.urdf.xacro"/>
 
-  <node name="baxter_planning_scene_tutorial" pkg="baxter_dance" type="baxter_planning_scene_tutorial" respawn="false" output="screen">
+  <node name="dance_collision_check" pkg="baxter_dance" type="dance_collision_check" respawn="false" output="screen">
     <rosparam command="load" file="$(find baxter_moveit_config)/config/kinematics.yaml"/>
     <!--<rosparam command="load" file="$(find baxter_moveit_config)/config/kinect_sensor.yaml"/> -->
   </node>
