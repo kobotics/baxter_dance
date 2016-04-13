@@ -13,9 +13,24 @@ find_package(catkin
   dynamic_reconfigure
   baxter_core_msgs
   baxter_interface
+
+  #added by Nikhil
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  pluginlib
+  cmake_modules
+  geometric_shapes
 )
 
 #catkin_python_setup()
+
+add_service_files(
+  FILES
+  ReactiveBehavior.srv
+)
+
+generate_messages(DEPENDENCIES std_msgs)
 
 generate_dynamic_reconfigure_options(
   cfg_dance/JointSpringsExample.cfg
@@ -32,7 +47,26 @@ catkin_package(
   dynamic_reconfigure
   baxter_core_msgs
   baxter_interface
+
+  #added by Nikhil
+  moveit_core
+  moveit_ros_planning_interface
+  interactive_markers
+
 )
+#added by Nikhil
+find_package(Eigen REQUIRED)
+
+include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS})
+
+
+add_executable(baxter_planning_scene_tutorial src/baxter_planning_scene_tutorial.cpp)
+target_link_libraries(baxter_planning_scene_tutorial ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS baxter_planning_scene_tutorial DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
 
 #install(
 #  DIRECTORY scripts/

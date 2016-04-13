@@ -1,0 +1,6 @@
+int64 vx
+int64 vy
+int64 vz
+---
+bool result
+
