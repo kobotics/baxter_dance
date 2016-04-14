@@ -1,0 +1,5 @@
+The dependencies should all be installed.
+
+1. Run the freenect command found in the Baxter Kinect tutorial
+2. Run SAC.launch to get downsampled voxels
+3. Run MoveIt/Rviz/whatever and /voxel_grid/output is the topic; it should automatically have a tf to camera_link so when camera_link is tf'd, it will move as well
