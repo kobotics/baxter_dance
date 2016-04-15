@@ -196,6 +196,9 @@ target_link_libraries (transform_ros ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_executable (xyzfinder_ros src/xyzfinder_ros.cpp)
 target_link_libraries (xyzfinder_ros ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
+add_executable (xyzavg_ros src/xyzavg_ros.cpp)
+target_link_libraries (xyzavg_ros ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
 
 #target_link_libraries(people_detector libvtkCommon.so libvtkFiltering.so ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 #add_executable(baxter_segmentation src/main_ground_based_people_detection.cpp)
