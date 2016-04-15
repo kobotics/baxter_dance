@@ -95,7 +95,7 @@ class ReactiveControl(object):
         print("Running. Ctrl-c to quit")
 
 
-    def _reactive_behavior(self, vel, duration): #applpies 
+    def _reactive_behavior(self, vel, duration): #moves the end effector along vel for duration sec 
 
         global en
 
@@ -213,7 +213,8 @@ def main():
     # register shutdown callback
     rospy.on_shutdown(rc.clean_shutdown)
     rc.move_to_neutral()
-    rc._reactive_behavior([0,0.1,0,0,0,0],10)
+    rospy.spin()
+    #rc._reactive_behavior([0,0.1,0,0,0,0],10)
 
 
 if __name__ == "__main__":
