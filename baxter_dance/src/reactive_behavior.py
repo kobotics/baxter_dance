@@ -45,6 +45,9 @@ from std_msgs.msg import (
     Empty,
 )
 
+from baxter_dance.srv import *
+
+
 import baxter_interface
 
 from baxter_examples.cfg import (
@@ -54,10 +57,11 @@ from baxter_interface import CHECK_VERSION
 from baxter_pykdl import baxter_kinematics
 
 
+#global variables
 b = True
 kin = None
 limb_side = None
-
+rc = None
 
 en = "enabled"
 
@@ -95,9 +99,12 @@ class ReactiveControl(object):
         print("Running. Ctrl-c to quit")
 
 
-    def _reactive_behavior(self, vel, duration): #applpies 
+    def _reactive_behavior(self, req): #applpies 
 
         global en
+        
+        vel = req.vel
+        duration = req.duration
 
         #ATTENTION:
         control_rate = rospy.Rate(self._rate)
@@ -147,14 +154,14 @@ class ReactiveControl(object):
             dummy_cmd[joint] = 0
 
         if(en == "enabled"): self._limb.set_joint_velocities(dummy_cmd)
-     
-
-
-    def move_to_neutral(self):
+        return True
+    
+    def move_to_neutral(self,dummy1):
         """
         Moves the limb to neutral location.
         """
         self._limb.move_to_neutral()
+        return True
 
     def move_to_joint_positions(self, positions):
         """
@@ -177,6 +184,7 @@ class ReactiveControl(object):
 def main():
     global limb_side
     global kin
+    global rc
 
     arg_fmt = argparse.RawDescriptionHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=arg_fmt,
@@ -206,10 +214,13 @@ def main():
     #print lines
     # register shutdown callback
     rospy.on_shutdown(rc.clean_shutdown)
-    rc.move_to_neutral()
-    rc._reactive_behavior([0,0.1,0,0,0,0],10)
+    rc.move_to_neutral(0)
+    #rc._reactive_behavior([0,0.1,0,0,0,0],10)
 
 
 if __name__ == "__main__":
     main()
+    s = rospy.Service('reactive_behavior', ReactiveBehavior, rc.move_to_neutral) #rc._reactive_behavior)
+    print "reactive behavior ready."
+    rospy.spin()
 

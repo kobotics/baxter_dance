@@ -3,7 +3,7 @@
   <arg name="rviz_config" default="$(find baxter_moveit_config)/launch/moveit.rviz" />
 
   <!-- By default we do not overwrite the URDF. Change the following to true to change the default behavior -->
-  <arg name="load_robot_description" default="true"/>
+  <arg name="load_robot_description" default="false"/>
   <!-- Left and right electric gripper params. Set to true to check for collisions for their links -->
   <arg name="right_electric_gripper" default="false"/>
   <arg name="left_electric_gripper" default="false"/>
@@ -23,7 +23,7 @@
       command="$(find xacro)/xacro.py $(find baxter_description)/urdf/baxter.urdf.xacro"/>
 
   <node name="dance_collision_check" pkg="baxter_dance" type="dance_collision_check" respawn="false" output="screen">
-    <!--rosparam command="load" file="$(find baxter_moveit_config)/config/kinematics.yaml"/> -->
-    <rosparam command="load" file="$(find baxter_moveit_config)/config/kinect_sensor.yaml"/> 
+    <rosparam command="load" file="$(find baxter_moveit_config)/config/kinematics.yaml"/>
+    <rosparam command="load" file="$(find baxter_moveit_config)/config/kinect_sensor.yaml"/>
   </node>
 </launch>

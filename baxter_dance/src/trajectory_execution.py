@@ -42,6 +42,7 @@ from dynamic_reconfigure.server import (
     Server,
 )
 from std_msgs.msg import (
+    String,
     Empty,
 )
 
@@ -60,7 +61,7 @@ limb_side = None
 
 
 en = "enabled"
-
+state = None
 
 def try_float(x):
     try:
@@ -130,6 +131,14 @@ def map_file(filename, loops=1):
 
     return (keys,lines)
 
+def state_listener():
+    rospy.Subscriber("state",String,state_callback)
+
+def state_callback(data):
+    global state
+    state = data.data
+    print state
+
 
 class JointSprings(object):
     """
@@ -146,7 +155,7 @@ class JointSprings(object):
         self._dyn = reconfig_server
 
         # control parameters
-        self._rate = 1000.0  # Hz
+        self._rate = 2000.0 #1000.0  # Hz
         self._missed_cmds = 20.0  # Missed cycles before triggering timeout
 
         # create our limb instance
@@ -218,6 +227,7 @@ class JointSprings(object):
 
         loops = 1
         l = 0
+        moved_to_start = False
         # If specified, repeat the file playback 'loops' number of times
         while l < 1:
             i = 0
@@ -225,8 +235,11 @@ class JointSprings(object):
             print("Moving to start position...")
 
             _cmd, lcmd_start, rcmd_start, _raw = clean_line(lines[1], keys)
+            
             #left.move_to_joint_positions(lcmd_start)
-            self.move_to_joint_positions(rcmd_start)
+            if(state == 'execute'): 
+                self.move_to_joint_positions(rcmd_start)
+                moved_to_start = True
             start_time = rospy.get_time()
             for values in lines[1:]:
                 #print values
@@ -239,7 +252,7 @@ class JointSprings(object):
                 cmd, lcmd, rcmd, values = clean_line(values, keys)
                 
                 #command this set of commands until the next frame
-                while (rospy.get_time() - start_time) < values[0]:
+                while (rospy.get_time() - start_time) < values[0] and state == 'execute' and moved_to_start:
                     if rospy.is_shutdown():
                         print("\n Aborting - ROS shutdown")
                         return False
@@ -270,9 +283,9 @@ class JointSprings(object):
                                 #get the next target angles
 
                                 target_angles[joint] = rcmd[joint]
-                                print joint , rcmd[joint]
+                                #print joint , rcmd[joint]
                                 
-                                print joint , cur_pos[joint]
+                                #print joint , cur_pos[joint]
                                 cmd[joint] = stiffness * (target_angles[joint] -
                                                                    cur_pos[joint])
                                 # damping portion
@@ -320,8 +333,8 @@ class JointSprings(object):
 
         # print 'cmd'
         # print cmd
-        print 'dummy_cmd'
-        print dummy_cmd
+        #print 'dummy_cmd'
+        #print dummy_cmd
         # print 'dummy_torques'
         # print dummy_torques
         # print ""
@@ -523,9 +536,9 @@ class JointSprings(object):
             #self._update_forces()
 
             #self._run_trajectory_simple()
-            #self._run_trajectory('trajectories/video2')
-            if l <= loops: 
-                self._apply_dummy_force(np.array([0,0,-2.5,0,0,0]),20)
+            self._run_trajectory('../trajectories/video2')
+            #if l <= loops: 
+            #    self._apply_dummy_force(np.array([0,0,-2.5,0,0,0]),20)
             print "looping"
             control_rate.sleep()
 
@@ -576,6 +589,9 @@ def main():
     dynamic_cfg_srv = Server(JointSpringsExampleConfig,
                              lambda config, level: config)
     
+    # set up a state listener
+    state_listener()
+
     #Initialize object from pyKDL library
     kin = baxter_kinematics(args.limb)
 
