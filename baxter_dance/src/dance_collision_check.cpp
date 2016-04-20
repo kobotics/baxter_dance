@@ -48,6 +48,18 @@
 #include <moveit/kinematic_constraints/utils.h>
 #include <eigen_conversions/eigen_msg.h>
 
+#include <geometry_msgs/Pose.h>
+
+// MoveIt!
+#include <moveit_msgs/PlanningScene.h>
+#include <moveit_msgs/AttachedCollisionObject.h>
+#include <moveit_msgs/GetStateValidity.h>
+#include <moveit_msgs/DisplayRobotState.h>
+
+#include <moveit/robot_state/robot_state.h>
+#include <moveit/robot_state/conversions.h>
+
+
 // BEGIN_SUB_TUTORIAL userCallback
 //
 // User defined constraints can also be specified to the PlanningScene
@@ -99,7 +111,7 @@ int main(int argc, char **argv)
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
   robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
   planning_scene::PlanningScene planning_scene(kinematic_model);
-  
+    
 
 
 // Collision Checking
