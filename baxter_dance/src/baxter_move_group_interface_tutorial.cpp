@@ -56,7 +56,6 @@ int main(int argc, char **argv)
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
-
   /* This sleep is ONLY to allow Rviz to come up */
   // sleep(20.0);
   
