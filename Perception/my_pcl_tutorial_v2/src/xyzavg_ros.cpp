@@ -82,6 +82,7 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   avg_z = avg_z/j;
   //printf("x %f y %f z %f j %i \n", avg_x, avg_y, avg_z, j);
   //sleep(1);
+  //printf("j %i \n", j);
   // Publish the data
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base_link";
@@ -91,9 +92,10 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   marker.action = visualization_msgs::Marker::ADD;
   marker.type = visualization_msgs::Marker::CUBE;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.pose.position.x = avg_z;
-  marker.pose.position.y = -1*avg_x;
-  marker.pose.position.z = avg_y;
+  
+    marker.pose.position.x = avg_z;
+    marker.pose.position.y = -1*avg_x;
+    marker.pose.position.z = avg_y; 
   marker.pose.orientation.x = 0.0;
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
@@ -106,8 +108,9 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   marker.color.g = 1.0f;
   marker.color.b = 0.0f;
   marker.lifetime = ros::Duration();
-  vis_pub.publish( marker );
-  pub.publish (*cloud_msg);
+  if(j>100)
+  {vis_pub.publish( marker );}
+  //pub.publish (*cloud_msg);
 }
 int
 main (int argc, char** argv)
@@ -120,7 +123,7 @@ main (int argc, char** argv)
   ros::Subscriber sub = nh.subscribe ("input", 1, cloud_cb);
 
   // Create a ROS publisher for the output point cloud
-  pub = nh.advertise<sensor_msgs::PointCloud2> ("/voxel_transform/output", 1);
+  //pub = nh.advertise<sensor_msgs::PointCloud2> ("/voxel_transform/output", 1);
   vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
   // Spin
   ros::spin ();

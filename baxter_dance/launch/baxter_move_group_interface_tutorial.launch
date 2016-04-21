@@ -1,0 +1,8 @@
+<launch>
+
+  <include file="$(find baxter_moveit_config)/launch/demo_baxter.launch"/>
+
+  <node name="baxter_move_group_interface_tutorial" pkg="baxter_dance" type="baxter_move_group_interface_tutorial" respawn="false" output="screen">
+  </node>
+
+</launch>

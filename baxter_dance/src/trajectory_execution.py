@@ -109,20 +109,20 @@ def map_file(filename, loops=1):
     """
     left = baxter_interface.Limb('left')
     right = baxter_interface.Limb('right')
-    grip_left = baxter_interface.Gripper('left', CHECK_VERSION)
-    grip_right = baxter_interface.Gripper('right', CHECK_VERSION)
+    #grip_left = baxter_interface.Gripper('left', CHECK_VERSION)
+    #grip_right = baxter_interface.Gripper('right', CHECK_VERSION)
     #rate = rospy.Rate(1000)
 
-    if grip_left.error():
-        grip_left.reset()
-    if grip_right.error():
-        grip_right.reset()
-    if (not grip_left.calibrated() and
-        grip_left.type() != 'custom'):
-        grip_left.calibrate()
-    if (not grip_right.calibrated() and
-        grip_right.type() != 'custom'):
-        grip_right.calibrate()
+    # if grip_left.error():
+    #     grip_left.reset()
+    # if grip_right.error():
+    #     grip_right.reset()
+    # if (not grip_left.calibrated() and
+    #     grip_left.type() != 'custom'):
+    #     grip_left.calibrate()
+    # if (not grip_right.calibrated() and
+    #     grip_right.type() != 'custom'):
+    #     grip_right.calibrate()
 
     print("Playing back: %s" % (filename,))
     with open(filename, 'r') as f:
@@ -132,7 +132,8 @@ def map_file(filename, loops=1):
     return (keys,lines)
 
 def state_listener():
-    rospy.Subscriber("state",String,state_callback)
+    rospy.Subscriber("/state",String,state_callback)
+    print "Subscribing to state topic"
 
 def state_callback(data):
     global state
@@ -151,15 +152,16 @@ class JointSprings(object):
     moving the limb to a neutral location, entering torque mode, and attaching
     virtual springs.
     """
-    def __init__(self, limb, reconfig_server):
+    def __init__(self, reconfig_server):
         self._dyn = reconfig_server
 
         # control parameters
         self._rate = 2000.0 #1000.0  # Hz
         self._missed_cmds = 20.0  # Missed cycles before triggering timeout
 
-        # create our limb instance
-        self._limb = baxter_interface.Limb(limb)
+        # create our limb instances
+        self._limb_right = baxter_interface.Limb('right')
+        self._limb_left = baxter_interface.Limb('left')
 
         # initialize parameters
         self._springs = dict()
@@ -167,8 +169,10 @@ class JointSprings(object):
         self._start_angles = dict()
 
         # create cuff disable publisher
-        cuff_ns = 'robot/limb/' + limb + '/suppress_cuff_interaction'
-        self._pub_cuff_disable = rospy.Publisher(cuff_ns, Empty, queue_size=1)
+        cuff_left_ns = 'robot/limb/' + 'left' + '/suppress_cuff_interaction'
+        self._pub_cuff_left_disable = rospy.Publisher(cuff_left_ns, Empty, queue_size=1)
+        cuff_right_ns = 'robot/limb/' + 'right' + '/suppress_cuff_interaction'
+        self._pub_cuff_right_disable = rospy.Publisher(cuff_right_ns, Empty, queue_size=1)
 
         # verify robot is enabled
         print("Getting robot state... ")
@@ -179,11 +183,18 @@ class JointSprings(object):
         print("Running. Ctrl-c to quit")
 
     def _update_parameters(self):
-        for joint in self._limb.joint_names():
+        for joint in self._limb_right.joint_names():
             self._springs[joint] = self._dyn.config[joint[-2:] +
                                                     '_spring_stiffness']
             self._damping[joint] = self._dyn.config[joint[-2:] +
                                                     '_damping_coefficient']
+        for joint in self._limb_left.joint_names():
+            self._springs[joint] = self._dyn.config[joint[-2:] +
+                                                    '_spring_stiffness']
+            self._damping[joint] = self._dyn.config[joint[-2:] +
+                                                    '_damping_coefficient']
+
+
 
     def _run_trajectory(self, filename): #runs a trajectory stored in file
 
@@ -207,20 +218,23 @@ class JointSprings(object):
         # create our command dict
         cmd = dict()
         # record current angles/velocities
-        cur_pos = self._limb.joint_angles()
+        cur_pos_left = self._limb_left.joint_angles()
+        cur_pos_right = self._limb_right.joint_angles()
         #print cur_pos
-        cur_vel = self._limb.joint_velocities()
+        cur_vel_left = self._limb_left.joint_velocities()
+        cur_vel_right = self._limb_right.joint_velocities()
 
-        jaco = kin.jacobian(cur_pos)
+        #jaco = kin.jacobian(cur_pos)
         
-        target_angles = self._start_angles
+        target_angles_left = self._start_angles_left
+        target_angles_right = self._start_angles_right
 
-        torques = [0 for x in range(7)]
+        #torques = [0 for x in range(7)]
         joint_index = {'s0':0, 's1':1, 'e0':2, 'e1':3, 'w0':4, 'w1':5, 'w2':6 }
         #joint_index_right = {'right_s0':0, 'right_s1':1, 'right_e0':2, 'right_e1':3, 'right_w0':4, 'right_w1':5, 'right_w2':6 }
         
-        dummy_force = np.array([0,2.5,0,0,0,0])
-        dummy_torques = np.dot(np.array(jaco).transpose(),dummy_force.transpose())
+        #dummy_force = np.array([0,2.5,0,0,0,0])
+        #dummy_torques = np.dot(np.array(jaco).transpose(),dummy_force.transpose())
             
         dummy_cmd = {}
 
@@ -237,8 +251,8 @@ class JointSprings(object):
             _cmd, lcmd_start, rcmd_start, _raw = clean_line(lines[1], keys)
             
             #left.move_to_joint_positions(lcmd_start)
-            if(state == 'execute'): 
-                self.move_to_joint_positions(rcmd_start)
+            if(state == 'execute'):
+                self.move_to_joint_positions(lcmd_start,rcmd_start)
                 moved_to_start = True
             start_time = rospy.get_time()
             for values in lines[1:]:
@@ -258,16 +272,15 @@ class JointSprings(object):
                         return False
                     
                     # record current angles/velocities
-                    cur_pos = self._limb.joint_angles()
+                    cur_pos_left = self._limb_left.joint_angles()
+                    cur_pos_right = self._limb_right.joint_angles()
                     #print cur_pos
-                    cur_vel = self._limb.joint_velocities()
+                    cur_vel_left = self._limb_left.joint_velocities()
+                    cur_vel_right = self._limb_right.joint_velocities()
 
                     if len(lcmd):
-                        pass
-                        #left.set_joint_positions(lcmd)
-                    if len(rcmd):
                         # calculate current forces
-                        for joint in target_angles.keys():
+                        for joint in target_angles_left.keys():
                             # spring portion
                             #ATTENTION
                             stiffness = self._springs[joint]
@@ -282,14 +295,14 @@ class JointSprings(object):
                                 
                                 #get the next target angles
 
-                                target_angles[joint] = rcmd[joint]
+                                target_angles_left[joint] = lcmd[joint]
                                 #print joint , rcmd[joint]
                                 
                                 #print joint , cur_pos[joint]
-                                cmd[joint] = stiffness * (target_angles[joint] -
-                                                                   cur_pos[joint])
+                                cmd[joint] = stiffness * (target_angles_left[joint] -
+                                                                   cur_pos_left[joint])
                                 # damping portion
-                                cmd[joint] -= damping * cur_vel[joint]
+                                cmd[joint] -= damping * cur_vel_left[joint]
                                 
                                 #torques[joint_index[joint[len(joint)-2:len(joint)]]] = cmd[joint]        
                                 #if cmd[joint] > 0.2: cmd[joint] = 0.2
@@ -300,10 +313,52 @@ class JointSprings(object):
 
                         #right.set_joint_positions(rcmd)
                         if(mode == "control"):
-                            if(en == "enabled"): self._limb.set_joint_torques(cmd)
+                            if(en == "enabled"): self._limb_left.set_joint_torques(cmd)
 
                         if(mode == "reaction"):
-                            if(en == "enabled"): self._limb.set_joint_torques(dummy_cmd)
+                            if(en == "enabled"): self._limb_left.set_joint_torques(dummy_cmd)
+                    
+                    cmd = {}
+
+                    if len(rcmd):
+                        # calculate current forces
+                        for joint in target_angles_right.keys():
+                            # spring portion
+                            #ATTENTION
+                            stiffness = self._springs[joint]
+                            damping = self._damping[joint]*15
+                            #print str(joint) + ' ' + str(stiffness)
+                            
+                            #messy stiffness adjustment
+                            #if (joint == 'left_e1'): stiffness = 1*self._springs[joint]
+                            #elif (joint == 'left_s1'): stiffness = 4*self._springs[joint]
+
+                            if(mode == "control"):
+                                
+                                #get the next target angles
+
+                                target_angles_right[joint] = rcmd[joint]
+                                #print joint , rcmd[joint]
+                                
+                                #print joint , cur_pos[joint]
+                                cmd[joint] = stiffness * (target_angles_right[joint] -
+                                                                   cur_pos_right[joint])
+                                # damping portion
+                                cmd[joint] -= damping * cur_vel_right[joint]
+                                
+                                #torques[joint_index[joint[len(joint)-2:len(joint)]]] = cmd[joint]        
+                                #if cmd[joint] > 0.2: cmd[joint] = 0.2
+                                #if cmd[joint] < -0.2: cmd[joint] = -0.2
+
+                            if(mode == "reaction"):
+                                dummy_cmd[joint] = dummy_torques[joint_index[joint[len(joint)-2:len(joint)]]]
+
+                        #right.set_joint_positions(rcmd)
+                        if(mode == "control"):
+                            if(en == "enabled"): self._limb_right.set_joint_torques(cmd)
+
+                        if(mode == "reaction"):
+                            if(en == "enabled"): self._limb_right.set_joint_torques(dummy_cmd)
                         
                     control_rate.sleep()
                         #time.sleep(0.1)
@@ -341,7 +396,7 @@ class JointSprings(object):
         # command new joint torques
         #print cmd
         #print torques
-        force = np.dot(jaco,torques)
+        #force = np.dot(jaco,torques)
         #print force
 
     def _run_trajectory_simple(self): #runs a simple trajectory of one joint
@@ -495,13 +550,15 @@ class JointSprings(object):
         """
         Moves the limb to neutral location.
         """
-        self._limb.move_to_neutral()
+        self._limb_left.move_to_neutral()
+        self._limb_right.move_to_neutral()
 
-    def move_to_joint_positions(self, positions):
+    def move_to_joint_positions(self, positions_left,positions_right):
         """
         Moves the limb to neutral location.
         """
-        self._limb.move_to_joint_positions(positions)
+        self._limb_left.move_to_joint_positions(positions_left)
+        self._limb_right.move_to_joint_positions(positions_right)
 
 
     def attach_springs(self):
@@ -510,7 +567,8 @@ class JointSprings(object):
         joint positions.
         """
         # record initial joint angles
-        self._start_angles = self._limb.joint_angles()
+        self._start_angles_left = self._limb_left.joint_angles()
+        self._start_angles_right = self._limb_right.joint_angles()
         
         #ATTENTION
         #self._start_angles['left_e1'] = 0.2
@@ -521,7 +579,8 @@ class JointSprings(object):
         # for safety purposes, set the control rate command timeout.
         # if the specified number of command cycles are missed, the robot
         # will timeout and disable
-        self._limb.set_command_timeout((1.0 / self._rate) * self._missed_cmds)
+        self._limb_left.set_command_timeout((1.0 / self._rate) * self._missed_cmds)
+        self._limb_right.set_command_timeout((1.0 / self._rate) * self._missed_cmds)
 
         loops = 1
         l = 0
@@ -536,7 +595,7 @@ class JointSprings(object):
             #self._update_forces()
 
             #self._run_trajectory_simple()
-            self._run_trajectory('../trajectories/video2')
+            self._run_trajectory('c1_v2')
             #if l <= loops: 
             #    self._apply_dummy_force(np.array([0,0,-2.5,0,0,0]),20)
             print "looping"
@@ -547,7 +606,8 @@ class JointSprings(object):
         Switches out of joint torque mode to exit cleanly
         """
         print("\nExiting example...")
-        self._limb.exit_control_mode()
+        self._limb_left.exit_control_mode()
+        self._limb_right.exit_control_mode()
         if not self._init_state and self._rs.state().enabled:
             print("Disabling robot...")
             self._rs.disable()
@@ -573,7 +633,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=arg_fmt,
                                      description=main.__doc__)
     parser.add_argument(
-        '-l', '--limb', dest='limb', required=True, choices=['left', 'right'],
+        '-l', '--limb', dest='limb', required=False, choices=['left', 'right'],
         help='limb on which to attach joint springs'
     )
     parser.add_argument(
@@ -581,7 +641,7 @@ def main():
         help='file from which to read trajectory to be played back with torque control'
     )
     args = parser.parse_args(rospy.myargv()[1:])
-    limb_side = args.limb
+    #limb_side = args.limb
     #filename = args.file
     #print filename
     print("Initializing node... ")
@@ -593,9 +653,9 @@ def main():
     state_listener()
 
     #Initialize object from pyKDL library
-    kin = baxter_kinematics(args.limb)
+    #kin = baxter_kinematics(args.limb)
 
-    js = JointSprings(args.limb, dynamic_cfg_srv)
+    js = JointSprings(dynamic_cfg_srv)
     #print keys
     #print lines
     # register shutdown callback

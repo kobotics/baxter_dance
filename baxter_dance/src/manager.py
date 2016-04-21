@@ -104,7 +104,7 @@ class DanceManager(object):
 
         #check for collision against Kinect information
 
-        v_threshold = 0.5
+        v_threshold = 2
         high_v_l = filter(lambda x: x > v_threshold, cur_vel_r.values())
         high_v_r = filter(lambda x: x > v_threshold, cur_vel_r.values())
         if high_v_l != [] or high_v_l != []: #need to add perception data
@@ -117,8 +117,8 @@ class DanceManager(object):
             pub_led_r.publish(100)
             pub_led_g.publish(0)
             #self._head.command_nod()
-            return 'react'
-
+            #return 'react'
+            return 'execute'
         else: 
             return 'execute'
 

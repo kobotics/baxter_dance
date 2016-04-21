@@ -66,6 +66,12 @@ add_executable(baxter_planning_scene_tutorial src/baxter_planning_scene_tutorial
 target_link_libraries(baxter_planning_scene_tutorial ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS baxter_planning_scene_tutorial DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+
+add_executable(baxter_move_group_interface_tutorial src/baxter_move_group_interface_tutorial.cpp)
+target_link_libraries(baxter_move_group_interface_tutorial ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS baxter_move_group_interface_tutorial DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
 add_executable(dance_collision_check src/dance_collision_check.cpp)
 target_link_libraries(dance_collision_check ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS dance_collision_check DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

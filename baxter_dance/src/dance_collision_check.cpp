@@ -84,10 +84,13 @@ double strict_str2double(char* str)
 
 int main(int argc, char **argv)
 {
+  
+
   ros::init (argc, argv, "right_arm_kinematics");
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
+  //ros::NodeHandle node_handle;
 
 // BEGIN_TUTORIAL
 // 
@@ -106,12 +109,21 @@ int main(int argc, char **argv)
 
 // Read Trajectories
 
+ // ros::Publisher planning_scene_diff_publisher = node_handle.advertise<moveit_msgs::PlanningScene>("planning_scene_monitor", 1);
+ //  while(planning_scene_diff_publisher.getNumSubscribers() < 1)
+ //  {
+ //    ros::WallDuration sleep_t(0.5);
+ //    sleep_t.sleep();
+ //  }
+
+ //  moveit_msgs::PlanningScene planning_scene_dynam;
 
   ROS_INFO_STREAM("robot_description");
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
   robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
   planning_scene::PlanningScene planning_scene(kinematic_model);
     
+
 
 
 // Collision Checking
@@ -141,11 +153,12 @@ int main(int argc, char **argv)
   const robot_model::JointModelGroup* joint_model_group_right =
     current_state.getJointModelGroup("right_arm");
   const robot_model::JointModelGroup* joint_model_group_left =
-    current_state.getJointModelGroup("left_arm");
+    current_state.getJointModelGroup("both_arms");
   collision_detection::AllowedCollisionMatrix acm = planning_scene.getAllowedCollisionMatrix();
   collision_detection::CollisionRequest collision_request;
   collision_detection::CollisionResult collision_result;
   robot_state::RobotState copied_state = planning_scene.getCurrentState();
+  //collision_detection::WorldPtr world_ptr = planning_scene_dynam.world;
   //current_state.copyJointGroupPositions(joint_model_group_left, joint_values_left);
   //current_state.copyJointGroupPositions(joint_model_group_right, joint_values_right);
 
@@ -153,19 +166,19 @@ int main(int argc, char **argv)
   std::ifstream file("/home/kim/baxter/ros_ws/src/baxter_dance/src/simple2.txt");
   
 
-  collision_request.group_name = "arms";
-  current_state.setJointGroupPositions(joint_model_group_right, joint_values_right);
-  current_state.setJointGroupPositions(joint_model_group_left, joint_values_left);
-  //current_state.setToDefaultValues();
-  planning_scene.checkSelfCollision(collision_request, collision_result);
-  ROS_INFO_STREAM("Test 1: Current state is "
-            << (collision_result.collision ? "in" : "not in")
-            << " self collision");
-  collision_result.clear();
-  planning_scene.checkCollision(collision_request, collision_result);
-  ROS_INFO_STREAM("Test 2: Current state is "
-            << (collision_result.collision ? "in" : "not in")
-            << " collision");
+  // collision_request.group_name = "left_arm";
+  // current_state.setJointGroupPositions(joint_model_group_right, joint_values_right);
+  // current_state.setJointGroupPositions(joint_model_group_left, joint_values_left);
+  // //current_state.setToDefaultValues();
+  // planning_scene.checkSelfCollision(collision_request, collision_result);
+  // ROS_INFO_STREAM("Test 1: Current state is "
+  //           << (collision_result.collision ? "in" : "not in")
+  //           << " self collision");
+  // collision_result.clear();
+  // planning_scene.checkCollision(collision_request, collision_result);
+  // ROS_INFO_STREAM("Test 2: Current state is "
+  //           << (collision_result.collision ? "in" : "not in")
+  //           << " collision");
 
   const std::vector<std::string> &joint_names_left = joint_model_group_left->getJointModelNames();
   const std::vector<std::string> &joint_names_right = joint_model_group_right->getJointModelNames();
