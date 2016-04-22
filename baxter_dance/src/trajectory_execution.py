@@ -133,12 +133,18 @@ def map_file(filename, loops=1):
 
 def state_listener():
     rospy.Subscriber("/state",String,state_callback)
+    rospy.Subscriber("/plan",String,plan_callback)
     print "Subscribing to state topic"
 
 def state_callback(data):
     global state
     state = data.data
     print state
+
+def plan_callback(data):
+    global plan
+    plan = data.data
+    print plan
 
 
 class JointSprings(object):
@@ -595,7 +601,7 @@ class JointSprings(object):
             #self._update_forces()
 
             #self._run_trajectory_simple()
-            self._run_trajectory('b3_v3')
+            self._run_trajectory(plan)
             #if l <= loops: 
             #    self._apply_dummy_force(np.array([0,0,-2.5,0,0,0]),20)
             print "looping"

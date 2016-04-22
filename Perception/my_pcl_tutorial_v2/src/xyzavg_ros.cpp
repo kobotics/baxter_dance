@@ -108,8 +108,13 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   marker.color.g = 1.0f;
   marker.color.b = 0.0f;
   marker.lifetime = ros::Duration();
-  if(j>100)
-  {vis_pub.publish( marker );}
+  if(j<100){
+    marker.pose.position.x = -999;
+    marker.pose.position.y = -999;
+    marker.pose.position.z = -999;
+  }
+  vis_pub.publish( marker );
+  
   //pub.publish (*cloud_msg);
 }
 int
