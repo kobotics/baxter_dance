@@ -595,7 +595,7 @@ class JointSprings(object):
             #self._update_forces()
 
             #self._run_trajectory_simple()
-            self._run_trajectory('c1_v2')
+            self._run_trajectory('b3_v3')
             #if l <= loops: 
             #    self._apply_dummy_force(np.array([0,0,-2.5,0,0,0]),20)
             print "looping"

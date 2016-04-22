@@ -104,17 +104,21 @@ class DanceManager(object):
 
         #check for collision against Kinect information
 
-        v_threshold = 2
+        v_threshold = 2.5
         high_v_l = filter(lambda x: x > v_threshold, cur_vel_r.values())
         high_v_r = filter(lambda x: x > v_threshold, cur_vel_r.values())
         if high_v_l != [] or high_v_l != []: #need to add perception data
-        	return 'react'
-        if time % 15 < 1:
-            reactive_behavior_client([0,-0.1,0.0,0,0,0],3)
+            print "High velocity detected"
             self._head.set_pan(1, speed=30, timeout=10)
             #print 'here'
             self._head.set_pan(0, speed=30, timeout=0)
-            pub_led_r.publish(100)
+            return 'react'
+        if time % 15 < 1:
+            # reactive_behavior_client([0,-0.1,0.0,0,0,0],3)
+            # self._head.set_pan(1, speed=30, timeout=10)
+            # #print 'here'
+            # self._head.set_pan(0, speed=30, timeout=0)
+            # pub_led_r.publish(100)
             pub_led_g.publish(0)
             #self._head.command_nod()
             #return 'react'
