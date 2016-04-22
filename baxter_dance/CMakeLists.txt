@@ -71,6 +71,9 @@ add_executable(baxter_move_group_interface_tutorial src/baxter_move_group_interf
 target_link_libraries(baxter_move_group_interface_tutorial ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS baxter_move_group_interface_tutorial DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+add_executable(move_group_interface_tutorial_nikhil src/move_group_interface_tutorial_nikhil.cpp)
+target_link_libraries(move_group_interface_tutorial_nikhil ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS move_group_interface_tutorial_nikhil DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 add_executable(dance_collision_check src/dance_collision_check.cpp)
 target_link_libraries(dance_collision_check ${catkin_LIBRARIES} ${Boost_LIBRARIES})
