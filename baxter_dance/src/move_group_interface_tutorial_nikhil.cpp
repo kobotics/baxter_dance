@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 
   /* This sleep is ONLY to allow Rviz to come up */
-  sleep(20.0);
+  //sleep(20.0);
   
   // BEGIN_TUTORIAL
   // 

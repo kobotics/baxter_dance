@@ -88,14 +88,15 @@ int main(int argc, char **argv)
   ROS_INFO("Reference frame: %s", group.getEndEffectorLink().c_str());
   
   //std::vector<double> joint_values_vector;
-  double joint_values_array[] = {-1.1435826760620118, 0.5246214288574219, -0.5851651633789063, -0.3985437554931641, -0.0038349519653320314, 0.8448399179626466, -0.29874275809936524};
+  // double joint_values_array[] = {-1.1435826760620118, 0.5246214288574219, -0.5851651633789063, -0.3985437554931641, -0.0038349519653320314, 0.8448399179626466, -0.29874275809936524};
+  double joint_values_array[] = {0, -0.55, 0.0, 0.75, -0.0, 1.26, -0.0};
   
   std::vector<double> joint_values(joint_values_array, joint_values_array + sizeof(joint_values_array) / sizeof(double));
 
 
   // Random positions
   // distance in radians to set to random position
-  double distance = 0.314;
+  double distance = 0.5;
   
   
   //Robot state
@@ -115,38 +116,62 @@ int main(int argc, char **argv)
     }
 
   
-  RobotStateTarget->setToRandomPositionsNearBy(group.getCurrentState()->getJointModelGroup(group.getName()), *RobotStateTarget, distance);
+  // RobotStateTarget->setToRandomPositionsNearBy(group.getCurrentState()->getJointModelGroup(group.getName()), *RobotStateTarget, distance);
   std::vector<double> group_variable_values;
   
-  RobotStateTarget->copyJointGroupPositions(RobotStateTarget->getJointModelGroup(group.getName()), group_variable_values);
-  for (std::vector<double>::const_iterator i = group_variable_values.begin();i != group_variable_values.end(); ++i)
-    {
-      ROS_INFO("%f",*i);
-    }
+  // RobotStateTarget->copyJointGroupPositions(RobotStateTarget->getJointModelGroup(group.getName()), group_variable_values);
+  // for (std::vector<double>::const_iterator i = group_variable_values.begin();i != group_variable_values.end(); ++i)
+  //   {
+  //     ROS_INFO("%f",*i);
+  //   }
 
 
   //set start state
   // group.setStartState(*RobotStateStart);
   //assign to target
-  group.setJointValueTarget(group_variable_values);
 
+  // group.setJointValueTarget(group_variable_values);
+
+  // set max joint velocities (0,1)
+  group.setMaxVelocityScalingFactor(0.5);
   moveit::planning_interface::MoveGroup::Plan my_plan;
-  bool success = group.plan(my_plan);
-  ROS_INFO("Visualizing plan 2 (joint space goal) %s",success?"":"FAILED");
-  // ROS_INFO(my_plan.trajectory_);
-  /* Sleep to give Rviz time to visualize the plan. */
-    if (1)
+  bool success = false;
+  // ROS_INFO("Visualizing plan 2 (joint space goal) %s",success?"":"FAILED");
+  // // ROS_INFO(my_plan.trajectory_);
+  // /* Sleep to give Rviz time to visualize the plan. */
+  //   if (1)
+  // {
+  //   ROS_INFO("Visualizing plan 2 (again)");    
+  //   display_trajectory.trajectory_start = my_plan.start_state_;
+  //   display_trajectory.trajectory.push_back(my_plan.trajectory_);
+  //   display_publisher.publish(display_trajectory);
+  //   /* Sleep to give Rviz time to visualize the plan. */
+  //   sleep(5.0);
+  // }
+    while(!success)
   {
-    ROS_INFO("Visualizing plan 2 (again)");    
-    display_trajectory.trajectory_start = my_plan.start_state_;
-    display_trajectory.trajectory.push_back(my_plan.trajectory_);
-    display_publisher.publish(display_trajectory);
-    /* Sleep to give Rviz time to visualize the plan. */
-    sleep(5.0);
-  }
-  
+    RobotStateTarget->setJointGroupPositions(RobotStateTarget->getJointModelGroup(group.getName()), joint_values);
 
-     // Adding/Removing Objects and Attaching/Detaching Objects
+    RobotStateTarget->setToRandomPositionsNearBy(group.getCurrentState()->getJointModelGroup(group.getName()), *RobotStateTarget, distance);
+    
+    RobotStateTarget->copyJointGroupPositions(RobotStateTarget->getJointModelGroup(group.getName()), group_variable_values);
+      for (std::vector<double>::const_iterator i = group_variable_values.begin();i != group_variable_values.end(); ++i)
+    {
+      ROS_INFO("%f",*i);
+    }
+    group.setJointValueTarget(group_variable_values);
+    success = group.plan(my_plan);
+      if(success)
+    {
+      group.execute(my_plan); 
+    }
+  }
+  // if(success)
+  // {
+  //   group.execute(my_plan);
+     
+  // }
+  // Adding/Removing Objects and Attaching/Detaching Objects
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   // First, we will define the collision object message.
   moveit_msgs::CollisionObject collision_object;
@@ -160,14 +185,14 @@ int main(int argc, char **argv)
   shape_msgs::SolidPrimitive primitive;
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
-  primitive.dimensions[0] = 5;
+  primitive.dimensions[0] = 3;
   primitive.dimensions[1] = 0.6;
   primitive.dimensions[2] = 1.2;
 
   /* A pose for the box (specified relative to frame_id) */
   geometry_msgs::Pose box_pose;
   box_pose.orientation.w = 1.0;
-  box_pose.position.x =  2.5;
+  box_pose.position.x =  1.5;
   box_pose.position.y = 0;
   box_pose.position.z =  -0.6;
 
@@ -182,14 +207,47 @@ int main(int argc, char **argv)
   // Now, let's add the collision object into the world
   ROS_INFO("Add an object into the world");  
   planning_scene_interface.addCollisionObjects(collision_objects);
-  sleep(5.0);
+  // sleep(5.0);
+  
+  ROS_INFO("Attach the object to the robot");  
+  group.attachObject(collision_object.id);  
+  /* Sleep to give Rviz time to show the object attached (different color). */
+  sleep(4.0);
+
+  for(int i  =0; i<10;i++)
+  {
+    RobotStateTarget->setToRandomPositionsNearBy(group.getCurrentState()->getJointModelGroup(group.getName()), *RobotStateTarget, distance);
+    RobotStateTarget->copyJointGroupPositions(RobotStateTarget->getJointModelGroup(group.getName()), group_variable_values);
+    group.setJointValueTarget(group_variable_values);
+    group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getJointModelGroup(group.getName()), group_variable_values);
+    //   for (std::vector<double>::const_iterator i = group_variable_values.begin();i != group_variable_values.end(); ++i)
+    // {
+    //   ROS_INFO("%f",*i);
+    // }
+
+    success = group.plan(my_plan);
+      if(success)
+    {
+      group.execute(my_plan); 
+    }
+    else
+    {
+      //#TO-DO code to set robot state to current state of robot
+    }
+  }
+  // Now, let's detach the collision object from the robot.
+  ROS_INFO("Detach the object from the robot");  
+  group.detachObject(collision_object.id);  
+  /* Sleep to give Rviz time to show the object detached. */
+  sleep(4.0);
+
 
   ROS_INFO("Remove the object from the world");  
   std::vector<std::string> object_ids;
   object_ids.push_back(collision_object.id);  
   planning_scene_interface.removeCollisionObjects(object_ids);
   /* Sleep to give Rviz time to show the object is no longer there. */
-  sleep(4.0);
+  // sleep(4.0);
   /* Sleep so we have time to see the object in RViz */
   
 

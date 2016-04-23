@@ -19,6 +19,7 @@ from dynamic_reconfigure.server import (
 from std_msgs.msg import (
     String,
     Float32,
+    UInt16,
 )
 
 from baxter_dance.srv import *
@@ -113,24 +114,26 @@ class DanceManager(object):
             #print 'here'
             #self._head.set_pan(0, speed=30, timeout=0)
             return 'react'
-        if time % 15 < 1:
+        #if time % 5 < 1:
             # reactive_behavior_client([0,-0.1,0.0,0,0,0],3)
             # self._head.set_pan(1, speed=30, timeout=10)
             # #print 'here'
             # self._head.set_pan(0, speed=30, timeout=0)
-            # pub_led_r.publish(100)
-            pub_led_g.publish(0)
+            #pub_led_r.publish(100)
+            #pub_led_g.publish(0)
+            #print "Trying to control LEDs"
             #self._head.command_nod()
             #return 'react'
-            return 'execute'
+            #return 'execute'
         else: 
             return 'execute'
 
 if __name__ == "__main__":
     
     pub = rospy.Publisher('state', String, queue_size=10)
-    pub_led_r = rospy.Publisher('/robot/sonar/lights/set_red_level', Float32, queue_size=10)
-    pub_led_g = rospy.Publisher('/robot/sonar/lights/set_green_level', Float32, queue_size=10)
+    pub_led_r = rospy.Publisher('robot/sonar/head_sonar/lights/set_red_level', Float32, queue_size=10)
+    pub_led_g = rospy.Publisher('robot/sonar/head_sonar/lights/set_green_level', Float32, queue_size=10)
+    #pub_led_sonar = rospy.Publisher('robot/sonar/head_sonar/lights/set_lights', UInt16, queue_size=10)
     print("Initializing node... ")
     rospy.init_node('manager', anonymous=True)
 	

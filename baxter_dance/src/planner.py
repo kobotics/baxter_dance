@@ -80,7 +80,8 @@ def CheckQuadrant(x,y,z):
 
 if __name__ == "__main__":
     
-    plan_names = {'bottom':'b1_v2','center':'c1_v2','right':'r1','left':'l1'}
+    #plan_names = {'bottom':'b1_v2','center':'c1_v2','right':'r1','left':'l1'}
+    plan_names = {'bottom':'b_short','center':'c_short','right':'r_short','left':'l_short'}
     pub = rospy.Publisher('plan', String, queue_size=5)
     rospy.Subscriber("/visualization_marker",Marker,centroid_callback)
     rospy.init_node('planner', anonymous=True)

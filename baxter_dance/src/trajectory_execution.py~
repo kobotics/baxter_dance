@@ -611,7 +611,7 @@ class JointSprings(object):
             head.command_nod()
             head.command_nod()
             head.command_nod()
-            #time.sleep(1)
+            time.sleep(1)
             pub_led_r.publish(0)
             pub_led_g.publish(100)
             self._run_trajectory(plan)
